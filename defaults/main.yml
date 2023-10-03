@@ -1,0 +1,37 @@
+---
+#users
+users: users
+deployuser: false
+adduser_groups: developers
+
+#ntp
+timezone: 'Europe/Kiev'
+chronyd: false
+# chrony_servers:
+#   - {server: 'server byrpi2.dynu.net iburst'}
+#   - {server: 'server ntp.kuro-home.net iburst'}
+#   - {server: 'server ntp1.itcompliance.dk iburst'}
+# chrony_allow_nets:
+#   - {net: 'allow 192.168.56.0/24'}
+
+#disks
+mount_opts: 'discard,defaults,nofail'
+deploy: false
+
+#ssh
+sshd_port: 22
+password_authentication: "no"
+pubkey_authentication: "yes"
+root_login: "no"
+
+#visudo
+BASE_GROUPS:
+  - group: 'developers'
+    # privileges: '/bin/ln, /bin/su -l deploy, /bin/rm /var/www/admin, /usr/sbin/service admin_uwsgi reload, /usr/sbin/service admin_uwsgi start, /usr/sbin/service admin_uwsgi restart, /usr/sbin/service admin_uwsgi stop, /bin/systemctl start admin_uwsgi.service, /bin/systemctl stop admin_uwsgi.service, /bin/systemctl reload admin_uwsgi.service, /bin/systemctl restart admin_uwsgi.service, /bin/su deploy -c git clone git@github.com\:Pstrx/admin-py3.git -b master /home/deploy/admin/admin_new, /bin/su deploy -c git clone git@github.com\:Pstrx/admin-py3.git -b dev /home/deploy/admin/admin_new, /bin/su deploy -c cp config.py /home/deploy/admin/admin_new/config.py, /bin/su deploy -c /home/deploy/admin/venv/bin/pip install -r /home/deploy/admin/admin_new/requirements.txt, /bin/su deploy -c test -d /home/deploy/admin/admin_prev, /bin/su deploy -c rm -rf /home/deploy/admin/admin_prev, /bin/su deploy -c mv /home/deploy/admin/admin_current /home/deploy/admin/admin_prev && mv /home/deploy/admin/admin_new /home/deploy/admin/admin_current, /bin/su deploy -c rm -rf /home/deploy/admin/admin_current && mv /home/deploy/admin/admin_prev /home/deploy/admin/admin_current'
+    privileges: |
+      /bin/ln,\
+      /bin/su -l deploy
+
+sudoers_files:
+  - { src: '../sudoers/sudoers', dest: '/etc/sudoers.d/sudoers' }
+...

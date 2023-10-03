@@ -1,0 +1,66 @@
+---
+- name: Create list of mounted devices
+  set_fact:
+    mounted_devices: "{{ ansible_mounts|json_query('[].device') }}"
+
+- name: Umount disk if DigitalOcean
+  mount:
+     path: /mnt/*
+     state: unmounted
+  when: ansible_system_vendor == "DigitalOcean"
+
+- name: Create filesystems
+  filesystem:
+    fstype: "{{ item.fstype | default('ext4') }}"
+    dev: "{{ item.src }}"
+  with_items: "{{ mounts_src }}"
+  when: mounts_src not in mounted_devices
+
+- name: "Get UUID for partition"
+  command: blkid -s UUID -o value {{ item.src }}
+  register: disk_blkid
+  with_items: '{{ mounts_src }}'
+
+- name: Mount filesystems
+  mount:
+    path: "{{ item.0.path }}"
+    src: "UUID={{ item.1.stdout }}"
+    fstype: "{{ item.0.fstype | default('ext4') }}"
+    opts: "{{ item.0.opts | default(mount_opts) }}"
+    state: mounted
+    backup: yes
+  with_together:
+    - "{{ mounts_src }}"
+    - "{{ disk_blkid.results }}"
+  when: mounts_src not in mounted_devices
+
+- name: Reconfigurate rsyslog
+  command: dpkg-reconfigure rsyslog
+
+- name: Create wtmp file
+  file: 
+    path: "/var/log/wtmp"
+    state: touch
+    owner: root
+    group: utmp
+    mode: 0664
+
+- name: Ensure persistent storage of log messages is enabled
+  file:
+    path: "/var/log/journal"
+    state: directory
+    owner: root
+    group: systemd-journal
+    mode: 02755
+  notify:
+  - create tmpfiles journald
+  - restart journald
+
+- name: Change ownership of a directory
+  file: 
+    path: /home/deploy
+    state: directory
+    owner: deploy
+    group: deploy
+  when: deploy
+...

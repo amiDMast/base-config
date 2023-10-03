@@ -1,0 +1,44 @@
+---
+- name: Install tzdata package
+  package:
+    name: 'tzdata'
+    state: present
+  tags: ntp
+
+- name: Install chrony package
+  package:
+    name: 'chrony'
+    state: present
+  when: chronyd
+  tags: ntp
+
+- name: Configure chronyd service
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+    backup: yes
+  when: chronyd
+  tags: ntp
+
+- name: Set timezone to {{ timezone }}
+  timezone:
+    name: "{{ timezone | default('Europe/Kiev')}}"
+  tags: ntp
+
+- name: Systemctl daemon-reload
+  systemd:
+    daemon_reload: yes
+  tags: ntp
+
+- name: Timedatectl update ntp
+  shell: 'timedatectl set-ntp off && timedatectl set-ntp on'
+  tags: ntp
+
+- name: Restart chronyd
+  systemd:
+    name: 'chronyd'
+    state: 'restarted'
+  register: chronyd_service_reload
+  when: chronyd
+  tags: ntp
+...

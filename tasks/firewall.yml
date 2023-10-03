@@ -1,0 +1,69 @@
+---
+- name: Install firewall utilites
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - ipset
+    - netfilter-persistent
+    - iptables-persistent
+
+- name: configure netfilter-persistent
+  template:
+    src: 15-ip4tables.j2
+    dest: /usr/share/netfilter-persistent/plugins.d/15-ip4tables
+  when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+- name: register ipset rules
+  shell: ipset -L
+  register: ipset_result
+- debug: msg={{ ipset_result.stdout_lines }}
+
+- name: register iptables rules
+  shell: iptables-save
+  register: iptables_result
+- debug: msg={{ iptables_result.stdout_lines }}
+
+- name: configure ipset
+  template:
+    src: ipset.j2
+    dest: /etc/iptables/ipset.rules
+  when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+  #notify:
+  #  - load ipset rules
+
+- name: reload ipset rules
+  shell: 'ipset flush; ipset restore -! < /etc/iptables/ipset.rules'
+  become: true
+
+- name: configure iptables
+  template:
+    src: iptables.j2
+    dest: /etc/iptables/rules.v4
+  when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+  #notify:
+  #  - load iptables rules
+
+- name: check syntax iptables
+  shell: iptables-restore --test /etc/iptables/rules.v4
+
+- name: load iptables rules
+  shell: 'iptables-restore < /etc/iptables/rules.v4'
+  become: true
+
+- name: enable service netfilter-persistent
+  systemd:
+    name: netfilter-persistent
+    enabled: yes
+    state: started
+    masked: no
+
+- name: register ipset rules
+  shell: ipset -L
+  register: ipset_result
+- debug: msg="{{ ipset_result.stdout_lines }}"
+
+- name: register iptables rules
+  shell: iptables-save
+  register: iptables_result
+- debug: msg="{{ iptables_result.stdout_lines }}"

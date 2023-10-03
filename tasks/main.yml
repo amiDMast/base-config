@@ -1,0 +1,47 @@
+#common main
+---
+- import_tasks: upgrade.yml
+  when: upgrade is defined and upgrade 
+  tags:
+    - upgrade
+
+- import_tasks: users.yml
+  tags:
+    - users
+
+- import_tasks: ntp.yml
+  tags:
+    - ntp
+
+- import_tasks: visudo.yml
+  tags:
+    - visudo
+
+- import_tasks: disks.yml
+  tags:
+    - disks
+
+- import_tasks: ssh.yml
+  tags:
+    - ssh
+    
+- import_tasks: disable_upgrade.yml
+  when:
+    - ansible_facts['distribution'] == "Ubuntu"
+    - ansible_facts['distribution_major_version'] >= "18"
+  tags:
+    - upgrade
+
+- import_tasks: disable_snapd.yml
+  when:
+    - ansible_facts['distribution'] == "Ubuntu"
+    - ansible_facts['distribution_major_version'] >= "18"
+  tags:
+    - snapd
+
+- import_tasks: firewall.yml
+  when: firewall is defined
+  tags:
+    - firewall
+...
+

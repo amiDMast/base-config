@@ -1,0 +1,12 @@
+---
+# tasks file for openssh-server
+- import_tasks: ssh_install.yml
+  tags:
+    - install_ssh
+    - install
+
+- import_tasks: ssh_configure.yml
+  tags:
+    - configure_ssh
+    - configure
+...

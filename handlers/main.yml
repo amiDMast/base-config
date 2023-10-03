@@ -1,0 +1,16 @@
+---
+- name: reload ssh
+  systemd:
+    name: ssh
+    state: reloaded
+
+- name: create tmpfiles journald
+  shell: "systemd-tmpfiles --create --prefix /var/log/journal"
+  args:
+    executable: /bin/bash
+
+- name: restart journald
+  service: 
+    name: systemd-journald
+    state: restarted
+...

@@ -1,0 +1,41 @@
+---
+# tasks file for disable-unattended-upgrade
+# - name: remove package unattended-upgrades
+#   become: True
+#   command: apt-get remove unattended-upgrades -y
+
+# - name: systemctl stop apt-daily.timer
+#   become: True
+#   command: systemctl stop apt-daily.timer
+
+# - name: systemctl disable apt-daily.timer
+#   become: True
+#   command: systemctl disable apt-daily.timer
+
+# - name: systemctl disable apt-daily.service
+#   become: True
+#   command: systemctl disable apt-daily.service
+
+# - name: systemctl daemon-reload
+#   become: True
+#   command: systemctl daemon-reload
+
+# - name: Stop and disable unattended-upgrades service
+#   systemd:
+#     name: unattended-upgrades
+#     state: stopped
+#     daemon-reload: yes
+#     enabled: no
+
+- name: Set Update-Package-Lists to 0
+  lineinfile:
+      path: '/etc/apt/apt.conf.d/20auto-upgrades'
+      regexp: '^APT::Periodic::Update-Package-Lists "1";'
+      line: 'APT::Periodic::Update-Package-Lists "0";'
+
+- name: Set Unattended-Upgrade to 0
+  lineinfile:
+      path: '/etc/apt/apt.conf.d/20auto-upgrades'
+      regexp: 'APT::Periodic::Unattended-Upgrade "1";'
+      line: 'APT::Periodic::Unattended-Upgrade "0";'
+...

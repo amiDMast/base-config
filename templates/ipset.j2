@@ -1,0 +1,18 @@
+{% for item in ipset_list %}
+{% if item.hash is not defined %}
+create {{ item.name }} hash:ip family inet hashsize 1024 maxelem 65536
+{% for item1 in item.ips %}add {{item.name}} {{ item1 }} 
+{% endfor %}
+{% else %}
+{% if item.hash == 'ip' %}
+create {{ item.name }} hash:ip family inet hashsize 1024 maxelem 65536
+{% for item1 in item.ips %}add {{item.name}} {{ item1 }} 
+{% endfor %}
+{% endif %}
+{% if item.hash == 'net' %}
+create {{ item.name }} hash:net family inet hashsize 1024 maxelem 65536
+{% for item1 in item.ips %}add {{item.name}} {{ item1 }} 
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endfor %}

@@ -1,0 +1,78 @@
+#adduser-task
+---
+- name: add group developer
+  group: 
+    name: '{{ adduser_groups }}'
+  when: deployuser
+
+- name: add users with default password
+  user:
+    name: '{{ item.name }}'
+    password: "$6$oZt6sSxf6sOcMSgV$0xvZycpvvmaHmwWm/oMG7SYS8Xz6zEP4atw5PWwHYz70BwOt.K74K6CxFuhNblYaPnwHf9VqsxlIiKfWRS.D40"
+    shell: /bin/bash
+    createhome: yes
+    groups: '{{ item.groups | default(users) }}'
+  with_items: '{{ adduser.users }}'
+  when: 
+    - adduser is defined
+    - item.change
+
+- name: set authorized key
+  authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.pubkey }}"
+    path: /home/{{ item.name }}/.ssh/authorized_keys
+    state: present
+  with_items: "{{ adduser.users }}"
+  when: 
+    - adduser is defined
+    - item.change 
+  
+- name: set change password before first login
+  command: chage -d 0 {{ item.name }}
+  with_items: '{{ adduser.users }}'
+  when:
+    - adduser is defined
+    - item.change
+
+- name: add deploy user
+  user:
+    name: deploy
+    shell: /bin/bash
+    createhome: yes
+    groups: developers
+    state: present
+    system: yes
+  when: deployuser
+
+- name: remove user
+  user:
+    name: '{{ item }}'
+    state: absent
+    remove: yes
+    force: yes
+  with_items: '{{ rmuser.users }}'
+  when: rmuser is defined
+
+- name: lock user
+  user:
+    name: '{{ item }}'
+    password_lock: yes
+  with_items: '{{ lock.users }}'
+  when: lock is defined
+
+- name: Create Admin group for web-auth in proxmox
+  shell: >
+    pveum groupadd admin -comment "System Administrators";
+    pveum aclmod / -group admin -role Administrator
+  become: true
+  when: pveum_users is defined
+
+- name: add users in admin group web-auth in proxmox
+  shell: >
+    pveum useradd {{ item }}@pam;
+    pveum usermod {{ item }}@pam -group admin
+  become: true
+  when: pveum_users is defined
+  with_items: '{{ pveum_users }}'
+...
